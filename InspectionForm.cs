@@ -8,9 +8,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-//using iText.Kernel.Pdf;
-//using iText.Kernel.Pdf.Canvas.Parser;
-//using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using Spire.Pdf;
 using Spire.Pdf.General.Find;
 using Spire.Pdf.Graphics;
@@ -28,8 +25,10 @@ namespace StandardChecker
             InitializeComponent();
         }
 
-        private void fileLoadingButton_Click(object sender, EventArgs e)
+        private async void fileLoadingButton_Click(object sender, EventArgs e)
         {
+            Progress<ProgressReportModel> progress = new Progress<ProgressReportModel>();
+            progress.ProgressChanged += ReportProgress;
 
             OpenFileDialog openFile = new OpenFileDialog();
             openFile.Title = "Mở tập tin cần kiểm tra";
@@ -37,30 +36,68 @@ namespace StandardChecker
 
             if (openFile.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
+                var filePath = openFile.FileName;
                 var docDirectory = openFile.FileName;
                 var indexPdfTag = docDirectory.IndexOf(".pdf");
                 var truncatedFilename = docDirectory.Substring(0, docDirectory.Length - 4);
 
-                textBox.Text = "";
+                await Task.Run(() => DocChecking(progress,docDirectory, filePath, truncatedFilename));
+             
+            }
+        }
+
+        
+
+        private void InspectionForm_Load(object sender, EventArgs e)
+        {
+            AutoModeCheckBox.Checked = true;
+        }
+
+        private void AutoModeCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (AutoModeCheckBox.Checked)
+            {
+                demoTextBox.Enabled = false;
+            }
+            else
+                demoTextBox.Enabled = true;
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private async Task DocChecking(IProgress<ProgressReportModel> progress,string docDirectory, string filePath, string truncatedFilename)
+        {
+            try
+            {
+                ProgressReportModel report = new ProgressReportModel();
+
+
+                textBox.Invoke((MethodInvoker)(() => textBox.Text = ""));
                 var loadingPdfFilename = docDirectory.Remove(0, docDirectory.LastIndexOf('\\') + 1);
 
-                textBox.Text = "Đang xử lý file: " + loadingPdfFilename + " \r\n";
+                textBox.Invoke((MethodInvoker)(() => textBox.Text = "Đang xử lý file: " + loadingPdfFilename + " \r\n"));
 
-                var filePath = openFile.FileName;
+
                 var pageText = new StringBuilder();
                 Boolean HasDetected = false;
 
                 PdfDocument document = new PdfDocument();
                 document.LoadFromFile(filePath);
 
+                var progressBarTotalCount = document.Pages.Count;
+                progressBarTotalCount += 2;
+                report.PercentageComplete = 1 * 100 / progressBarTotalCount;
+                progress.Report(report);
+
                 List<string> pageContent = new List<string>();
 
                 foreach (PdfPageBase page in document.Pages)
                 {
                     pageContent.Add(page.ExtractText());
-                    //pageText.Append(page.ExtractText());
                 }
-
 
                 List<String>[] pageContentList = new List<String>[document.Pages.Count];
 
@@ -68,7 +105,8 @@ namespace StandardChecker
                 {
                     string[] strArray = pageContent[i].ToString().Split();
 
-                    List<string> strList = strArray.Where(x => !string.IsNullOrEmpty(x)).ToList();
+                    List<string> strList = new List<string>();
+                    strList = strArray.Where(x => !string.IsNullOrEmpty(x)).ToList();
                     pageContentList[i] = strList;
                 }
                 //PdfUsedFont[] usedfont = document.UsedFonts;
@@ -79,8 +117,9 @@ namespace StandardChecker
                 {
                     if (!string.IsNullOrEmpty(demoTextBox.Text))
                     {
-                        textBox.Text = "";
-                        List<string> filterString = new List<string> { "IEC", "TCVN", "QCVN", "TCXD", "ACI", "ASTM" };
+                        AutoModeCheckBox.Enabled = false;
+                        textBox.Invoke((MethodInvoker)(() => textBox.Text = ""));
+                        List<string> filterString = new List<string> { "IEC", "TCVN", "QCVN", "TCXD", "ACI", "ASTM", "14TCN", "22TCN" };
                         string cleanDocumentString = demoTextBox.Text;
 
                         foreach (var item in filterString)
@@ -115,8 +154,8 @@ namespace StandardChecker
                                     if (docCodePosition > 0)
                                     {
                                         HasDetected = true;
-                                        textBox.Text += "Đã phát hiện VB hết hiệu lực - " + item + " trang " + $"{i + 1}" + " \r\n";
-                                        var notifyTextTemp = "Đã phát hiện văn bản - " + item + " - hết hiệu lực (" + "trang " + $"{i + 1})";
+                                        //textBox.Text += "Đã phát hiện VB hết hiệu lực - " + item + " trang " + $"{i + 1}" + " \r\n";
+                                        var notifyTextTemp = "(Trang " + $"{ i + 1}) " + "Đã phát hiện văn bản - " + item + " - hết hiệu lực";
                                         notifyContent.Add(notifyTextTemp);
 
                                         //find all matching strings from the first page, even if some of them span multiple lines
@@ -180,7 +219,7 @@ namespace StandardChecker
                     }
                     else
                     {
-                        
+
                         //document.Pages.Add();
                         PdfPageBase docResultPage = document.Pages.Add();
                         PdfTrueTypeFont font = new PdfTrueTypeFont(new Font("Arial", 12f, FontStyle.Regular), true);
@@ -193,9 +232,9 @@ namespace StandardChecker
 
                 else
                 {
-                    
 
-                    List<string> filterString = new List<string> { "IEC", "TCVN", "QCVN", "TCXD", "ACI", "ASTM" };
+
+                    List<string> filterString = new List<string> { "IEC", "TCVN", "QCVN", "TCXD", "ACI", "ASTM", "14TCN", "22TCN" };
 
                     var cleanDocumentList = new List<DocManagement>();
 
@@ -206,9 +245,9 @@ namespace StandardChecker
                     List<string> notifyAltContent = new List<string>();
                     List<string> notifyAbsoluteCheckContent = new List<string>();
                     List<string> relativeResultList = new List<string>();
-                    
-                    String[] relativeResultData = {};
-                    relativeResultList.Add("Trang;Ky hieu VB;VB tham chieu; VB thay the");
+
+                    String[] relativeResultData = { };
+                    relativeResultList.Add("Trang$Ky hieu VB$VB tham chieu$VB thay the");
 
                     var AlternativeList = context.DocManagements.Where(x => x.SourceDoc != 0).ToList();
                     var SourceOfAltDocList = new List<DocManagement>();
@@ -297,119 +336,136 @@ namespace StandardChecker
                             for (var i = 0; i < pageContentList.Count(); i++)
                             {
                                 Dictionary<string, int> docDic = new Dictionary<string, int>();
-
-                                foreach (var item in pageContentList[i])
+                                if (pageContentList[i].Count > 0)
                                 {
-                                    var docItem = item;
-
-                                    if (item[item.Length - 1].ToString() == ".")
+                                    foreach (var item in pageContentList[i])
                                     {
-                                        docItem = item.Substring(0, docItem.Length - 1);
-                                    }
+                                        var docItem = item;
 
-                                    if (item[item.Length - 1].ToString() == ",")
-                                    {
-                                        docItem = item.Substring(0, docItem.Length - 1);
-                                    }
-
-                                    var matchCheckBool = DiceCoefficientExtensions.DiceCoefficient(Cleanser.Cleanse(cleanDocumentString), Cleanser.Cleanse(docItem));
-
-                                    if (matchCheckBool >= acceptedMatchLevel)
-                                    {
-
-                                        if (!docDic.ContainsKey(docItem))
+                                        if (item[item.Length - 1].ToString() == ".")
                                         {
-                                            docDic.Add(docItem, 0);
-                                        }
-                                        else
-                                        {
-                                            docDic[docItem] += 1;
+                                            docItem = item.Substring(0, docItem.Length - 1);
                                         }
 
-                                        var docCodePosition = pageContent[i].ToString().IndexOf(docItem, StringComparison.OrdinalIgnoreCase);
-
-                                        if (matchCheckBool < 1)
+                                        if (item[item.Length - 1].ToString() == ",")
                                         {
-                                            //textBox.Text += "Đã phát hiện văn bản " + docItem + " hết hiệu lực " + "(trang " + $"{i + 1})" + " \r\n";
-                                            var notifyTextTemp = "Phát hiện văn bản " + docItem + $" (từ {invalidDoc.DocumentCode})" + " hết hiệu lực (" + "trang " + $"{i + 1})";
+                                            docItem = item.Substring(0, docItem.Length - 1);
+                                        }
 
-                                            string relativeResultItem = $"{i + 1};{docItem};{invalidDoc.DocumentCode};";
+                                        if (item[item.Length - 1].ToString() == ")")
+                                        {
+                                            docItem = item.Substring(0, docItem.Length - 1);
+                                        }
 
-                                            if (docCodePosition > 0)
+                                        if (item[item.Length - 1].ToString() == ";")
+                                        {
+                                            docItem = item.Substring(0, docItem.Length - 1);
+                                        }
+
+                                        var matchCheckBool = DiceCoefficientExtensions.DiceCoefficient(Cleanser.Cleanse(cleanDocumentString), Cleanser.Cleanse(docItem));
+
+                                        if (matchCheckBool >= acceptedMatchLevel)
+                                        {
+
+                                            if (!docDic.ContainsKey(docItem))
                                             {
-                                                HasDetected = true;
-
-                                                notifyContent.Add(notifyTextTemp);
-
-                                                var findAltDoc = context.DocManagements.Where(x => x.SourceDoc == invalidDoc.ID).ToList();
-
-                                                //find all matching strings from the first page, even if some of them span multiple lines
-                                                PdfTextFind[] findResults = document.Pages[i].FindText(docItem, TextFindParameter.CrossLine).Finds;
-
-                                                //highlight the search result
-                                                findResults[docDic[docItem]].ApplyHighLight(Color.Red);
-
-
-                                                if (findAltDoc.Count > 0)
-                                                {
-
-                                                    foreach (var AltItem in findAltDoc)
-                                                    {
-                                                        notifyTextTemp = "Văn bản " + invalidDoc.DocumentCode + " đã được thay thế bởi văn bản " + AltItem.DocumentCode;
-                                                        notifyContent.Add(notifyTextTemp);
-                                                        if (findAltDoc.Count < 2)
-                                                        {
-                                                            relativeResultItem += $"{AltItem.DocumentCode}";
-                                                        }
-                                                        else
-                                                            relativeResultItem += $"{AltItem.DocumentCode} - ";
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    relativeResultItem += " ";
-                                                }
-
-                                                relativeResultList.Add(relativeResultItem);
-
-                                                relativeResultData = relativeResultList.ToArray();
+                                                docDic.Add(docItem, 0);
                                             }
-                                        }
-                                        else
-                                        {
-                                            //textBox.Text += "Đã phát hiện văn bản " + docItem + " hết hiệu lực " + "(trang " + $"{i + 1})" + " \r\n";
-                                            var notifyTextTemp = "Đã phát hiện văn bản " + docItem + $" (tham chiếu từ {invalidDoc.DocumentCode})" + " hết hiệu lực (" + "trang " + $"{i + 1})";
-
-
-                                            if (docCodePosition > 0)
+                                            else
                                             {
-                                                HasDetected = true;
+                                                docDic[docItem] += 1;
+                                            }
 
-                                                notifyAbsoluteCheckContent.Add(notifyTextTemp);
-                                                var findAltDoc = context.DocManagements.Where(x => x.SourceDoc == invalidDoc.ID).ToList();
+                                            var docCodePosition = pageContent[i].ToString().IndexOf(docItem, StringComparison.OrdinalIgnoreCase);
 
-                                                //find all matching strings from the first page, even if some of them span multiple lines
-                                                PdfTextFind[] findResults = document.Pages[i].FindText(docItem, TextFindParameter.CrossLine).Finds;
+                                            if (matchCheckBool < 1)
+                                            {
+                                                //textBox.Text += "Đã phát hiện văn bản " + docItem + " hết hiệu lực " + "(trang " + $"{i + 1})" + " \r\n";
+                                                var notifyTextTemp = "(Trang " + $"{i + 1}) " + "Phát hiện văn bản " + docItem + $" (từ {invalidDoc.DocumentCode})" + " hết hiệu lực";
 
-                                                //highlight the search result
+                                                string relativeResultItem = $"{i + 1}${docItem}${invalidDoc.DocumentCode}$";
 
-                                                findResults[docDic[docItem]].ApplyHighLight(Color.Red);
-
-                                                if (findAltDoc.Count > 0)
+                                                if (docCodePosition > 0)
                                                 {
+                                                    HasDetected = true;
 
-                                                    foreach (var AltItem in findAltDoc)
+                                                    notifyContent.Add(notifyTextTemp);
+
+                                                    var findAltDoc = context.DocManagements.Where(x => x.SourceDoc == invalidDoc.ID).ToList();
+
+                                                    //find all matching strings from the first page, even if some of them span multiple lines
+                                                    PdfTextFind[] findResults = document.Pages[i].FindText(docItem, TextFindParameter.CrossLine).Finds;
+
+                                                    //highlight the search result
+                                                    findResults[docDic[docItem]].ApplyHighLight(Color.Red);
+
+
+                                                    if (findAltDoc.Count > 0)
                                                     {
-                                                        notifyTextTemp = "Văn bản " + invalidDoc.DocumentCode + " đã được thay thế bởi văn bản " + AltItem.DocumentCode;
-                                                        notifyAbsoluteCheckContent.Add(notifyTextTemp);
+
+                                                        foreach (var AltItem in findAltDoc)
+                                                        {
+                                                            notifyTextTemp = "Văn bản " + invalidDoc.DocumentCode + " đã được thay thế bởi văn bản " + AltItem.DocumentCode;
+                                                            notifyContent.Add(notifyTextTemp);
+                                                            if (findAltDoc.Count < 2)
+                                                            {
+                                                                relativeResultItem += $"{AltItem.DocumentCode}";
+                                                            }
+                                                            else
+                                                                relativeResultItem += $"{AltItem.DocumentCode} - ";
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        relativeResultItem += " ";
                                                     }
 
+                                                    relativeResultList.Add(relativeResultItem);
+
+                                                    relativeResultData = relativeResultList.ToArray();
+                                                }
+                                            }
+                                            else
+                                            {
+                                                //textBox.Text += "Đã phát hiện văn bản " + docItem + " hết hiệu lực " + "(trang " + $"{i + 1})" + " \r\n";
+                                                var notifyTextTemp = "(Trang " + $"{ i + 1}) " + "Đã phát hiện văn bản " + docItem + $" (tham chiếu từ {invalidDoc.DocumentCode})" + " hết hiệu lực";
+
+
+                                                if (docCodePosition > 0)
+                                                {
+                                                    HasDetected = true;
+
+                                                    notifyAbsoluteCheckContent.Add(notifyTextTemp);
+                                                    var findAltDoc = context.DocManagements.Where(x => x.SourceDoc == invalidDoc.ID).ToList();
+
+                                                    //find all matching strings from the first page, even if some of them span multiple lines
+                                                    PdfTextFind[] findResults = document.Pages[i].FindText(docItem, TextFindParameter.CrossLine).Finds;
+
+                                                    //highlight the search result
+
+                                                    findResults[docDic[docItem]].ApplyHighLight(Color.Red);
+
+                                                    if (findAltDoc.Count > 0)
+                                                    {
+
+                                                        foreach (var AltItem in findAltDoc)
+                                                        {
+                                                            notifyTextTemp = "Văn bản " + invalidDoc.DocumentCode + " đã được thay thế bởi văn bản " + AltItem.DocumentCode;
+                                                            notifyAbsoluteCheckContent.Add(notifyTextTemp);
+                                                        }
+
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
+                                report.PercentageComplete = (1 + i) * 100 / progressBarTotalCount;
+
+                                progress.Report(report);
+                                //Task.Delay(2000);
                             }
+
                         }
 
                         //save to file
@@ -493,15 +549,15 @@ namespace StandardChecker
                             PdfTrueTypeFont font1 = new PdfTrueTypeFont(new Font("Arial", 12f, FontStyle.Bold));
                             PdfStringFormat format1 = new PdfStringFormat(PdfTextAlignment.Center);
 
-                            page.Canvas.DrawString("Cac ket qua tuong doi tim duoc", font1, brush1, page.Canvas.ClientSize.Width/2, y, format1);
+                            page.Canvas.DrawString("Cac ket qua tuong doi tim duoc", font1, brush1, page.Canvas.ClientSize.Width / 2, y, format1);
                             y = y + font1.MeasureString("Trang", format1).Height;
                             y = y + 5;
 
-                            String[][] resultTabledataSource= new String[relativeResultData.Length][];
+                            String[][] resultTabledataSource = new String[relativeResultData.Length][];
 
                             for (int i = 0; i < relativeResultData.Length; i++)  //relativeResultData.Length
                             {
-                                resultTabledataSource[i] = relativeResultData[i].Split(';');
+                                resultTabledataSource[i] = relativeResultData[i].Split('$');
                             }
 
                             PdfTable table = new PdfTable();
@@ -522,9 +578,11 @@ namespace StandardChecker
                             #endregion
 
                             var newFileName = truncatedFilename + $" Checked on {DateTime.Now.Day}-{DateTime.Now.Month}@{DateTime.Now.Hour}-{DateTime.Now.Minute}" + ".pdf";
-                            document.SaveToFile(newFileName, FileFormat.PDF);
 
-                            textBox.Text += "Đã hoàn thành";
+                            var resultStatus = await Task.Run(() => saveResultPDF(document, newFileName));
+                            report.PercentageComplete = (progressBarTotalCount) * 100 / progressBarTotalCount;
+                            progress.Report(report);
+                            AutoModeCheckBox.Enabled = true;
                         }
                         else
                         {
@@ -533,28 +591,28 @@ namespace StandardChecker
 
                     }
                 }
-
             }
-        }
-
-        private void InspectionForm_Load(object sender, EventArgs e)
-        {
-            AutoModeCheckBox.Checked = true;
-        }
-
-        private void AutoModeCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            if (AutoModeCheckBox.Checked)
+            catch(Exception ex)
             {
-                demoTextBox.Enabled = false;
+                 DialogResult messDialog = MessageBox.Show("Vui lòng kiểm tra kết nối VPN", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                
+                if(messDialog == DialogResult.OK)
+                {
+                    Application.Exit();
+                }    
             }
-            else
-                demoTextBox.Enabled = true;
+        }
+        private async Task<Boolean> saveResultPDF (PdfDocument document,string newFileName)
+        {
+            await Task.Delay(2500);
+            document.SaveToFile(newFileName, FileFormat.PDF);
+            textBox.Invoke((MethodInvoker)(() => textBox.Text += "Đã hoàn thành")); 
+            return true;
         }
 
-        private void pictureBox1_Click(object sender, EventArgs e)
+        private void ReportProgress(object sender, ProgressReportModel e)
         {
-
+            progressBar.Value = e.PercentageComplete;
         }
     }
 }

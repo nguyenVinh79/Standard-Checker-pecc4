@@ -15,6 +15,7 @@ namespace StandardChecker
     {
         DocManagement currentDoc = new DocManagement();
         List<DocManagement> ComboboxDatalist = new List<DocManagement>();
+
         public ManageForm()
         {
             InitializeComponent();
@@ -28,6 +29,7 @@ namespace StandardChecker
             DocFilterCB.Items.Insert(3, "Văn bản thay thế");
             DocFilterCB.Items.Insert(4, "Tất cả");
             DocFilterCB.SelectedIndex = 0;
+
             InvalidCheckbox.Checked = false;
 
             documentDTGV.Columns[4].DefaultCellStyle.Format = "dd-MM-yyyy";
@@ -47,6 +49,7 @@ namespace StandardChecker
             DataGridViewColumn CheckExpiryCol = documentDTGV.Columns[7];
             DataGridViewColumn NoteCol = documentDTGV.Columns[8];
             DataGridViewColumn AlternativeCol = documentDTGV.Columns[9];
+            DataGridViewColumn SourceDocCol = documentDTGV.Columns[11];
 
             NameCol.Width = 500;
             CodeCol.Width = 200;
@@ -55,21 +58,67 @@ namespace StandardChecker
             ExpiryDateCol.Width = 100;
             CheckExpiryCol.Width = 100;
             NoteCol.Width = 380;
-            AlternativeCol.Width = 90;
+            AlternativeCol.Width = 80;
 
-            var context = new DocCheckEntities();
-            var DocList = context.DocManagements.ToList<DocManagement>();
-            documentDTGV.DataSource = DocList;
+            try
+            {
+                var context = new DocCheckEntities();
+                var DocList = context.DocManagements.ToList<DocManagement>();
+                var docListView = new List<DocManagementListView>();
+
+                docListView = LoadDocListView(DocList);
+           
+            #region get data for combobox
+            //foreach(var item in DocList)
+            //{
+            //    if(item.SourceDoc == 0)
+            //    {
+            //        docListView.Add(new DocManagementListView() {
+            //            ID = item.ID,
+            //            DocumentTitle = item.DocumentTitle,
+            //            DocumentCode = item.DocumentCode,
+            //            IssueDate = item.IssueDate,
+            //            ValidDate = item.ValidDate,
+            //            ExpireDate = item.ExpireDate,
+            //            Note = item.Note,
+            //            IsAlternativeDoc = item.IsAlternativeDoc,
+            //            IsInvalid = item.IsInvalid,
+            //            SourceDoc = item.SourceDoc,
+            //            SourceDocString = " "
+            //        });
+            //    }
+            //    else
+            //    {
+            //        docListView.Add(new DocManagementListView()
+            //        {
+            //            ID = item.ID,
+            //            DocumentTitle = item.DocumentTitle,
+            //            DocumentCode = item.DocumentCode,
+            //            IssueDate = item.IssueDate,
+            //            ValidDate = item.ValidDate,
+            //            ExpireDate = item.ExpireDate,
+            //            Note = item.Note,
+            //            IsAlternativeDoc = item.IsAlternativeDoc,
+            //            IsInvalid = item.IsInvalid,
+            //            SourceDoc = item.SourceDoc,
+            //            SourceDocString = context.DocManagements.ToList<DocManagement>().Where(x => x.ID == item.SourceDoc).First().DocumentCode
+            //        });
+            //    }    
+            //}    
+            #endregion
+
+
+            documentDTGV.DataSource = docListView;
+
 
             ValidDatePicker.Enabled = false;
             IssueDatePicker.Enabled = false;
             ExpireDatePicker.Enabled = false;
-
             //ValidDatePicker.Format = DateTimePickerFormat.Custom;
-            ValidDatePicker.CustomFormat = " ";
             //IssueDatePicker.Format = DateTimePickerFormat.Custom;
             //IssueDatePicker.CustomFormat = " ";
             //ExpireDatePicker.Format = DateTimePickerFormat.Custom;
+            ValidDatePicker.CustomFormat = " ";
             ExpireDatePicker.CustomFormat = " ";
             ValidDatePicker.Enabled = true;
             IssueDatePicker.Enabled = true;
@@ -77,15 +126,12 @@ namespace StandardChecker
 
 
             //alternative doc load
-            var AltDocCode = context.DocManagements.ToList<DocManagement>().Where(x=>x.SourceDoc == 0).ToList();
-
-            AltDocComboBox.Items.Clear();
+            var AltDocCode = context.DocManagements.ToList<DocManagement>().Where(x => x.SourceDoc == 0).ToList();
             
+            AltDocComboBox.Items.Clear();
             ComboboxDatalist.Add(new DocManagement() { ID = 0, DocumentCode = "Vui lòng chọn văn bản gốc" });
-
             if (AltDocCode.Count > 0)
             {
-                
 
                 foreach (var item in AltDocCode)
                 {
@@ -93,9 +139,22 @@ namespace StandardChecker
                     //AltDocComboBox.Items.Add(item.DocumentCode);
                 }
 
+                AltDocComboBox.DataSource = null;
                 AltDocComboBox.DataSource = ComboboxDatalist;
                 AltDocComboBox.DisplayMember = "DocumentCode";
                 AltDocComboBox.ValueMember = "ID";
+
+               
+            }
+            }
+            catch (Exception ex)
+            {
+                DialogResult messDialog = MessageBox.Show("Vui lòng kiểm tra kết nối VPN", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                if (messDialog == DialogResult.OK)
+                {
+                    Application.Exit();
+                }
             }
         }
 
@@ -142,7 +201,7 @@ namespace StandardChecker
                         IssueDatePicker.CustomFormat = "dd-MM-yyyy";
                         var DateTemp = DateTime.Parse(documentDTGV.Rows[e.RowIndex].Cells["IssueDate"].FormattedValue.ToString(), culture);
                         IssueDatePicker.Value = DateTemp;
-                        
+
                     }
                     else
                         IssueDatePicker.CustomFormat = " ";
@@ -154,7 +213,7 @@ namespace StandardChecker
                         CultureInfo culture = new CultureInfo("es-ES");
 
                         ValidDatePicker.CustomFormat = "dd-MM-yyyy";
-                        var DateTemp = Convert.ToDateTime(documentDTGV.Rows[e.RowIndex].Cells["ValidDate"].FormattedValue.ToString(),culture);
+                        var DateTemp = Convert.ToDateTime(documentDTGV.Rows[e.RowIndex].Cells["ValidDate"].FormattedValue.ToString(), culture);
                         ValidDatePicker.Value = DateTemp;
 
                         currentDoc.ValidDate = DateTemp;
@@ -171,7 +230,7 @@ namespace StandardChecker
                         //DateTime converter
                         CultureInfo culture = new CultureInfo("es-ES");
                         ExpireDatePicker.CustomFormat = "dd-MM-yyyy";
-                        var DateTemp = Convert.ToDateTime(documentDTGV.Rows[e.RowIndex].Cells["ExpireDate"].FormattedValue.ToString(),culture);
+                        var DateTemp = Convert.ToDateTime(documentDTGV.Rows[e.RowIndex].Cells["ExpireDate"].FormattedValue.ToString(), culture);
                         ExpireDatePicker.Value = DateTemp;
 
                         currentDoc.ExpireDate = DateTemp;
@@ -182,7 +241,7 @@ namespace StandardChecker
                         currentDoc.ExpireDate = null;
                     }
 
-                    AltDocComboBox.SelectedIndex = ComboboxDatalist.FindIndex(x=>x.ID == Convert.ToInt32(documentDTGV.Rows[e.RowIndex].Cells["SourceDoc"].FormattedValue));
+                    AltDocComboBox.SelectedIndex = ComboboxDatalist.FindIndex(x => x.ID == Convert.ToInt32(documentDTGV.Rows[e.RowIndex].Cells["SourceDoc"].FormattedValue));
                 }
             }
         }
@@ -219,77 +278,88 @@ namespace StandardChecker
 
         private void AddBtn_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(NameTB.Text) && !string.IsNullOrEmpty(CodeTB.Text))
+            DialogResult messDialog = MessageBox.Show("Bạn muốn thêm văn bản này vào CSDL?", "Thông báo", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (messDialog == DialogResult.Yes)
             {
-
-                var context = new DocCheckEntities();
-                var newDoc = new DocManagement();
-                newDoc.DocumentTitle = NameTB.Text;
-                newDoc.DocumentCode = CodeTB.Text;
-                newDoc.Note = NoteTb.Text;
-                newDoc.IssueDate = IssueDatePicker.Value;
-                newDoc.SourceDoc = Convert.ToInt32(AltDocComboBox.SelectedValue);
-
-                if (!string.IsNullOrEmpty(ValidDatePicker.Text.Trim()))
-                    newDoc.ValidDate = ValidDatePicker.Value;
-
-                if (!string.IsNullOrEmpty(ExpireDatePicker.Text.Trim()))
-                    newDoc.ExpireDate = ExpireDatePicker.Value;
-
-
-                if (newDoc.SourceDoc >0)
+                if (!string.IsNullOrEmpty(NameTB.Text) && !string.IsNullOrEmpty(CodeTB.Text))
                 {
-                    newDoc.IsAlternativeDoc = true;
-                }
-                else
-                    newDoc.IsAlternativeDoc = false;
 
-                if (!string.IsNullOrEmpty(ExpireDatePicker.Text.Trim()))
-                {
-                    if (DateTime.Now >= ExpireDatePicker.Value)
+                    var context = new DocCheckEntities();
+                    var newDoc = new DocManagement();
+                    newDoc.DocumentTitle = NameTB.Text;
+                    newDoc.DocumentCode = CodeTB.Text;
+                    newDoc.Note = NoteTb.Text;
+                    newDoc.IssueDate = IssueDatePicker.Value;
+                    newDoc.SourceDoc = Convert.ToInt32(AltDocComboBox.SelectedValue);
+
+                    if (!string.IsNullOrEmpty(ValidDatePicker.Text.Trim()))
+                        newDoc.ValidDate = ValidDatePicker.Value;
+
+                    if (!string.IsNullOrEmpty(ExpireDatePicker.Text.Trim()))
+                        newDoc.ExpireDate = ExpireDatePicker.Value;
+
+
+                    if (newDoc.SourceDoc > 0)
                     {
-                        newDoc.IsInvalid = true;
+                        newDoc.IsAlternativeDoc = true;
                     }
                     else
-                        newDoc.IsInvalid = false;
-                }
-                else
-                {
-                    if(InvalidCheckbox.Checked)
+                        newDoc.IsAlternativeDoc = false;
+
+                    if (!string.IsNullOrEmpty(ExpireDatePicker.Text.Trim()))
                     {
-                        newDoc.IsInvalid = true;
-                    }    
-                    else newDoc.IsInvalid = false;
-                }
+                        if (DateTime.Now >= ExpireDatePicker.Value)
+                        {
+                            newDoc.IsInvalid = true;
+                        }
+                        else
+                            newDoc.IsInvalid = false;
+                    }
+                    else
+                    {
+                        if (InvalidCheckbox.Checked)
+                        {
+                            newDoc.IsInvalid = true;
+                        }
+                        else newDoc.IsInvalid = false;
+                    }
 
-                /*
-                if (!string.IsNullOrEmpty(AltDocComboBox.SelectedItem.ToString()))
-                {
-                    var sourceDoc = context.DocManagements.ToList<DocManagement>()
-                        .Where(x => x.DocumentCode == AltDocComboBox.SelectedItem.ToString().Trim()).First().ID;
-                    newDoc.SourceDoc = sourceDoc;
+                    /*
+                    if (!string.IsNullOrEmpty(AltDocComboBox.SelectedItem.ToString()))
+                    {
+                        var sourceDoc = context.DocManagements.ToList<DocManagement>()
+                            .Where(x => x.DocumentCode == AltDocComboBox.SelectedItem.ToString().Trim()).First().ID;
+                        newDoc.SourceDoc = sourceDoc;
+                    }
+                    else
+                        newDoc.SourceDoc = 0;
+                    */
+
+                    context.DocManagements.Add(newDoc);
+                    context.SaveChanges();
+
+
+                    MessageBox.Show("Thao tác thành công", "Thêm văn bản", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    ReloadAlternativeCombobox();
+                    NameTB.Text = "";
+                    CodeTB.Text = "";
+                    NoteTb.Text = "";
+                    IsAlternativeCB.Checked = false;
+                    ValidDatePicker.CustomFormat = " ";
+                    ExpireDatePicker.CustomFormat = " ";
+
+                    var DocList = context.DocManagements.ToList<DocManagement>();
+
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
                 else
-                    newDoc.SourceDoc = 0;
-                */
+                    MessageBox.Show("Vui lòng nhập đầy đủ tên và mã văn bản", "Thao tác không thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                context.DocManagements.Add(newDoc);
-                context.SaveChanges();
-
-                MessageBox.Show("Thao tác thành công", "Thêm văn bản", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                NameTB.Text = "";
-                CodeTB.Text = "";
-                NoteTb.Text = "";
-                IsAlternativeCB.Checked = false;
-                ValidDatePicker.CustomFormat = " ";
-                ExpireDatePicker.CustomFormat = " ";
-
-                var DocList = context.DocManagements.ToList<DocManagement>();
-                documentDTGV.DataSource = DocList;
             }
-            else
-                MessageBox.Show("Vui lòng nhập đầy đủ tên và mã văn bản","Thao tác không thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void ExpireDatePicker_MouseDown(object sender, MouseEventArgs e)
@@ -305,15 +375,20 @@ namespace StandardChecker
                 if (SortAZBtn.IconChar.ToString().Trim() == "SortAlphaDown")
                 {
                     SortAZBtn.IconChar = FontAwesome.Sharp.IconChar.SortAlphaDownAlt;
+
                     var DocList = context.DocManagements.ToList<DocManagement>().OrderBy(x => x.DocumentTitle).ToList();
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
                 else
                 {
                     SortAZBtn.IconChar = FontAwesome.Sharp.IconChar.SortAlphaDown;
 
                     var DocList = context.DocManagements.ToList<DocManagement>().OrderByDescending(x => x.DocumentTitle).ToList();
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
             }
 
@@ -328,20 +403,25 @@ namespace StandardChecker
                     {
                         SortAZBtn.IconChar = FontAwesome.Sharp.IconChar.SortAlphaDownAlt;
                         DocList = DocList.OrderBy(x => x.DocumentTitle).ToList();
-                        documentDTGV.DataSource = DocList;
+                        var docListView = new List<DocManagementListView>();
+                        docListView = LoadDocListView(DocList);
+                        documentDTGV.DataSource = docListView;
                     }
                     else
                     {
                         SortAZBtn.IconChar = FontAwesome.Sharp.IconChar.SortAlphaDown;
 
                         DocList = DocList.OrderByDescending(x => x.DocumentTitle).ToList();
-                        documentDTGV.DataSource = DocList;
+                        var docListView = new List<DocManagementListView>();
+                        docListView = LoadDocListView(DocList);
+                        documentDTGV.DataSource = docListView;
                     }
                 }
                 else
                 {
                     DocList = new List<DocManagement>();
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    documentDTGV.DataSource = docListView;
                 }
             }
 
@@ -355,20 +435,26 @@ namespace StandardChecker
                     {
                         SortAZBtn.IconChar = FontAwesome.Sharp.IconChar.SortAlphaDownAlt;
                         DocList = DocList.OrderBy(x => x.DocumentTitle).ToList();
-                        documentDTGV.DataSource = DocList;
+                        var docListView = new List<DocManagementListView>();
+                        docListView = LoadDocListView(DocList);
+                        documentDTGV.DataSource = docListView;
                     }
                     else
                     {
                         SortAZBtn.IconChar = FontAwesome.Sharp.IconChar.SortAlphaDown;
 
                         DocList = DocList.OrderByDescending(x => x.DocumentTitle).ToList();
-                        documentDTGV.DataSource = DocList;
+                        var docListView = new List<DocManagementListView>();
+                        docListView = LoadDocListView(DocList);
+                        documentDTGV.DataSource = docListView;
                     }
                 }
                 else
                 {
                     DocList = new List<DocManagement>();
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
             }
 
@@ -382,20 +468,26 @@ namespace StandardChecker
                     {
                         SortAZBtn.IconChar = FontAwesome.Sharp.IconChar.SortAlphaDownAlt;
                         DocList = DocList.OrderBy(x => x.DocumentTitle).ToList();
-                        documentDTGV.DataSource = DocList;
+                        var docListView = new List<DocManagementListView>();
+                        docListView = LoadDocListView(DocList);
+                        documentDTGV.DataSource = docListView;
                     }
                     else
                     {
                         SortAZBtn.IconChar = FontAwesome.Sharp.IconChar.SortAlphaDown;
 
                         DocList = DocList.OrderByDescending(x => x.DocumentTitle).ToList();
-                        documentDTGV.DataSource = DocList;
+                        var docListView = new List<DocManagementListView>();
+                        docListView = LoadDocListView(DocList);
+                        documentDTGV.DataSource = docListView;
                     }
                 }
                 else
                 {
                     DocList = new List<DocManagement>();
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
             }
 
@@ -409,20 +501,25 @@ namespace StandardChecker
                     {
                         SortAZBtn.IconChar = FontAwesome.Sharp.IconChar.SortAlphaDownAlt;
                         DocList = DocList.OrderBy(x => x.DocumentTitle).ToList();
-                        documentDTGV.DataSource = DocList;
+                        var docListView = new List<DocManagementListView>();
+                        docListView = LoadDocListView(DocList);
+                        documentDTGV.DataSource = docListView;
                     }
                     else
                     {
                         SortAZBtn.IconChar = FontAwesome.Sharp.IconChar.SortAlphaDown;
 
                         DocList = DocList.OrderByDescending(x => x.DocumentTitle).ToList();
-                        documentDTGV.DataSource = DocList;
+                        var docListView = new List<DocManagementListView>();
+                        docListView = LoadDocListView(DocList);
+                        documentDTGV.DataSource = docListView;
                     }
                 }
                 else
                 {
                     DocList = new List<DocManagement>();
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    documentDTGV.DataSource = docListView;
                 }
             }
 
@@ -430,78 +527,88 @@ namespace StandardChecker
 
         private void EditBtn_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(NameTB.Text) && !string.IsNullOrEmpty(CodeTB.Text))
+            DialogResult messDialog = MessageBox.Show("Bạn muốn chỉnh sửa văn bản này?", "Thông báo", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (messDialog == DialogResult.Yes)
             {
-                var context = new DocCheckEntities();
-                var selectedDoc = context.DocManagements.Where(x => x.ID == currentDoc.ID).FirstOrDefault();
-
-                selectedDoc.DocumentTitle = NameTB.Text;
-                selectedDoc.DocumentCode = CodeTB.Text;
-                selectedDoc.Note = NoteTb.Text;
-
-                selectedDoc.IssueDate = IssueDatePicker.Value;
-                selectedDoc.SourceDoc =Convert.ToInt32(AltDocComboBox.SelectedValue);
-
-                if (!string.IsNullOrEmpty(ValidDatePicker.Text.Trim()))
+                if (!string.IsNullOrEmpty(NameTB.Text) && !string.IsNullOrEmpty(CodeTB.Text))
                 {
-                    selectedDoc.ValidDate = ValidDatePicker.Value;
-                }
-                else
-                    selectedDoc.ValidDate = null;
+                    var context = new DocCheckEntities();
+                    var selectedDoc = context.DocManagements.Where(x => x.ID == currentDoc.ID).FirstOrDefault();
 
-                if (!string.IsNullOrEmpty(ExpireDatePicker.Text.Trim()))
-                {
-                    selectedDoc.ExpireDate = ExpireDatePicker.Value;
-                }
-                else
-                    selectedDoc.ExpireDate = null;
+                    selectedDoc.DocumentTitle = NameTB.Text;
+                    selectedDoc.DocumentCode = CodeTB.Text;
+                    selectedDoc.Note = NoteTb.Text;
 
-                if (selectedDoc.SourceDoc>0)
-                {
-                    selectedDoc.IsAlternativeDoc = true;
-                }
-                else
-                    selectedDoc.IsAlternativeDoc = false;
+                    selectedDoc.IssueDate = IssueDatePicker.Value;
+                    selectedDoc.SourceDoc = Convert.ToInt32(AltDocComboBox.SelectedValue);
 
-                if (!string.IsNullOrEmpty(ExpireDatePicker.Text.Trim()))
-                {
-                    if (DateTime.Now >= ExpireDatePicker.Value)
+                    if (!string.IsNullOrEmpty(ValidDatePicker.Text.Trim()))
                     {
-                        selectedDoc.IsInvalid = true;
+                        selectedDoc.ValidDate = ValidDatePicker.Value;
                     }
                     else
-                        selectedDoc.IsInvalid = false;
+                        selectedDoc.ValidDate = null;
+
+                    if (!string.IsNullOrEmpty(ExpireDatePicker.Text.Trim()))
+                    {
+                        selectedDoc.ExpireDate = ExpireDatePicker.Value;
+                    }
+                    else
+                        selectedDoc.ExpireDate = null;
+
+                    if (selectedDoc.SourceDoc > 0)
+                    {
+                        selectedDoc.IsAlternativeDoc = true;
+                    }
+                    else
+                        selectedDoc.IsAlternativeDoc = false;
+
+                    if (!string.IsNullOrEmpty(ExpireDatePicker.Text.Trim()))
+                    {
+                        if (DateTime.Now >= ExpireDatePicker.Value)
+                        {
+                            selectedDoc.IsInvalid = true;
+                        }
+                        else
+                            selectedDoc.IsInvalid = false;
+                    }
+                    else
+                    {
+                        if (InvalidCheckbox.Checked)
+                        {
+                            selectedDoc.IsInvalid = true;
+                        }
+                        else selectedDoc.IsInvalid = false;
+
+                    }
+
+                    AddBtn.Enabled = true;
+                    EditBtn.Enabled = false;
+                    NameTB.Text = "";
+                    CodeTB.Text = "";
+                    NoteTb.Text = "";
+                    IsAlternativeCB.Checked = false;
+                    ValidDatePicker.CustomFormat = " ";
+                    ExpireDatePicker.CustomFormat = " ";
+
+                    context.SaveChanges();
+
+                    ReloadAlternativeCombobox();
+
+                    MessageBox.Show("Thao tác thành công", "Cập nhật văn bản", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+
+
+                    var DocList = context.DocManagements.ToList<DocManagement>();
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
                 else
-                {
-                    if (InvalidCheckbox.Checked)
-                    {
-                        selectedDoc.IsInvalid = true;
-                    }
-                    else selectedDoc.IsInvalid = false;
+                    MessageBox.Show("Vui lòng nhập đầy đủ tên và mã văn bản", "Cập nhật văn bản", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                }
-
-                AddBtn.Enabled = true;
-                EditBtn.Enabled = false;
-                NameTB.Text = "";
-                CodeTB.Text = "";
-                NoteTb.Text = "";
-                IsAlternativeCB.Checked = false;
-                ValidDatePicker.CustomFormat = " ";
-                ExpireDatePicker.CustomFormat = " ";
-
-                context.SaveChanges();
-
-                MessageBox.Show("Thao tác thành công","Cập nhật văn bản", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-
-
-                var DocList = context.DocManagements.ToList<DocManagement>();
-                documentDTGV.DataSource = DocList;
             }
-            else
-                MessageBox.Show( "Vui lòng nhập đầy đủ tên và mã văn bản", "Cập nhật văn bản", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void ValidDateDel_Click(object sender, EventArgs e)
@@ -524,7 +631,7 @@ namespace StandardChecker
             if (!string.IsNullOrEmpty(searchContent.Text))
             {
                 var context = new DocCheckEntities();
-                var filteredDocs = context.DocManagements.Where(x => x.DocumentTitle.Contains(searchContent.Text.ToLower().ToString())).ToList();
+                var filteredDocs = context.DocManagements.Where(x => x.DocumentCode.Contains(searchContent.Text.ToLower().ToString())).ToList();
 
                 if (filteredDocs.Count > 0)
                 {
@@ -532,7 +639,7 @@ namespace StandardChecker
 
                 }
             }
-           
+
         }
 
         private void CancelBtn_Click(object sender, EventArgs e)
@@ -548,9 +655,13 @@ namespace StandardChecker
             DocFilterCB.SelectedIndex = 0;
             InvalidCheckbox.Checked = false;
 
+            ReloadAlternativeCombobox();
+
             var context = new DocCheckEntities();
             var DocList = context.DocManagements.ToList<DocManagement>();
-            documentDTGV.DataSource = DocList;
+            var docListView = new List<DocManagementListView>();
+            docListView = LoadDocListView(DocList);
+            documentDTGV.DataSource = docListView;
         }
 
         private void DocFilterCB_SelectedValueChanged(object sender, EventArgs e)
@@ -563,12 +674,15 @@ namespace StandardChecker
 
                 if (DocList.Count > 0)
                 {
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
                 else
                 {
                     DocList = new List<DocManagement>();
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    documentDTGV.DataSource = docListView;
                 }
             }
 
@@ -579,28 +693,34 @@ namespace StandardChecker
 
                 if (DocList.Count > 0)
                 {
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
                 else
                 {
                     DocList = new List<DocManagement>();
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    documentDTGV.DataSource = docListView;
                 }
             }
 
-            
-            if(DocFilterCB.SelectedIndex == 3)
+
+            if (DocFilterCB.SelectedIndex == 3)
             {
                 var DocList = context.DocManagements.Where(x => x.IsAlternativeDoc == true).ToList();
 
                 if (DocList.Count > 0)
                 {
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
                 else
                 {
                     DocList = new List<DocManagement>();
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    documentDTGV.DataSource = docListView;
                 }
             }
 
@@ -610,14 +730,90 @@ namespace StandardChecker
 
                 if (DocList.Count > 0)
                 {
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
                 else
                 {
                     DocList = new List<DocManagement>();
-                    documentDTGV.DataSource = DocList;
+                    var docListView = new List<DocManagementListView>();
+                    docListView = LoadDocListView(DocList);
+                    documentDTGV.DataSource = docListView;
                 }
             }
+        }
+        private void ReloadAlternativeCombobox ()
+        {
+            var context = new DocCheckEntities();
+            //alternative doc load
+            var AltDocCode = context.DocManagements.ToList<DocManagement>().Where(x => x.SourceDoc == 0).ToList();
+
+            AltDocComboBox.DataSource = null;
+            ComboboxDatalist.Clear();
+            
+            ComboboxDatalist.Add(new DocManagement() { ID = 0, DocumentCode = "Vui lòng chọn văn bản gốc" });
+            if (AltDocCode.Count > 0)
+            {
+
+                foreach (var item in AltDocCode)
+                {
+                    ComboboxDatalist.Add(new DocManagement() { ID = item.ID, DocumentCode = item.DocumentCode });
+                    //AltDocComboBox.Items.Add(item.DocumentCode);
+                }
+
+                
+                AltDocComboBox.DataSource = ComboboxDatalist;
+                AltDocComboBox.DisplayMember = "DocumentCode";
+                AltDocComboBox.ValueMember = "ID";
+                AltDocComboBox.SelectedIndex = 0;
+            }
+        }
+
+        private List<DocManagementListView> LoadDocListView (List<DocManagement> DocList)
+        {
+            var context = new DocCheckEntities();
+            var docListView = new List<DocManagementListView>();
+           
+            foreach (var item in DocList)
+            {
+                if (item.SourceDoc == 0)
+                {
+                    docListView.Add(new DocManagementListView()
+                    {
+                        ID = item.ID,
+                        DocumentTitle = item.DocumentTitle,
+                        DocumentCode = item.DocumentCode,
+                        IssueDate = item.IssueDate,
+                        ValidDate = item.ValidDate,
+                        ExpireDate = item.ExpireDate,
+                        Note = item.Note,
+                        IsAlternativeDoc = item.IsAlternativeDoc,
+                        IsInvalid = item.IsInvalid,
+                        SourceDoc = item.SourceDoc,
+                        SourceDocString = " "
+                    });
+                }
+                else
+                {
+                    docListView.Add(new DocManagementListView()
+                    {
+                        ID = item.ID,
+                        DocumentTitle = item.DocumentTitle,
+                        DocumentCode = item.DocumentCode,
+                        IssueDate = item.IssueDate,
+                        ValidDate = item.ValidDate,
+                        ExpireDate = item.ExpireDate,
+                        Note = item.Note,
+                        IsAlternativeDoc = item.IsAlternativeDoc,
+                        IsInvalid = item.IsInvalid,
+                        SourceDoc = item.SourceDoc,
+                        SourceDocString = context.DocManagements.ToList<DocManagement>().Where(x => x.ID == item.SourceDoc).First().DocumentCode
+                    });
+                }
+            }
+
+            return docListView;
         }
     }
 }

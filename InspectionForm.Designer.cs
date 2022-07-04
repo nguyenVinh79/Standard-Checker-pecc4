@@ -34,6 +34,7 @@
             this.demoTextBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.AutoModeCheckBox = new System.Windows.Forms.CheckBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
@@ -53,12 +54,14 @@
             this.fileLoadingButton.IconFont = FontAwesome.Sharp.IconFont.Auto;
             this.fileLoadingButton.IconSize = 40;
             this.fileLoadingButton.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.fileLoadingButton.Location = new System.Drawing.Point(564, 82);
+            this.fileLoadingButton.Location = new System.Drawing.Point(547, 74);
+            this.fileLoadingButton.Margin = new System.Windows.Forms.Padding(10, 3, 3, 3);
             this.fileLoadingButton.Name = "fileLoadingButton";
             this.fileLoadingButton.Padding = new System.Windows.Forms.Padding(20, 0, 0, 0);
-            this.fileLoadingButton.Size = new System.Drawing.Size(179, 81);
+            this.fileLoadingButton.Size = new System.Drawing.Size(176, 81);
             this.fileLoadingButton.TabIndex = 0;
             this.fileLoadingButton.Text = "Chọn file";
+            this.fileLoadingButton.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.fileLoadingButton.UseVisualStyleBackColor = true;
             this.fileLoadingButton.Click += new System.EventHandler(this.fileLoadingButton_Click);
             // 
@@ -68,7 +71,7 @@
             this.textBox.BackColor = System.Drawing.SystemColors.InactiveBorder;
             this.textBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.textBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F);
-            this.textBox.Location = new System.Drawing.Point(283, 329);
+            this.textBox.Location = new System.Drawing.Point(287, 350);
             this.textBox.Multiline = true;
             this.textBox.Name = "textBox";
             this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
@@ -78,7 +81,7 @@
             // demoTextBox
             // 
             this.demoTextBox.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.demoTextBox.Location = new System.Drawing.Point(224, 69);
+            this.demoTextBox.Location = new System.Drawing.Point(224, 71);
             this.demoTextBox.Name = "demoTextBox";
             this.demoTextBox.Size = new System.Drawing.Size(184, 30);
             this.demoTextBox.TabIndex = 3;
@@ -89,7 +92,7 @@
             this.label2.AutoSize = true;
             this.label2.BackColor = System.Drawing.Color.Transparent;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.label2.Location = new System.Drawing.Point(93, 72);
+            this.label2.Location = new System.Drawing.Point(90, 72);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(125, 25);
             this.label2.TabIndex = 5;
@@ -98,6 +101,7 @@
             // panel1
             // 
             this.panel1.AutoScroll = true;
+            this.panel1.Controls.Add(this.progressBar);
             this.panel1.Controls.Add(this.groupBox1);
             this.panel1.Controls.Add(this.textBox);
             this.panel1.Controls.Add(this.fileLoadingButton);
@@ -108,17 +112,29 @@
             this.panel1.Size = new System.Drawing.Size(1295, 768);
             this.panel1.TabIndex = 6;
             // 
+            // progressBar
+            // 
+            this.progressBar.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.progressBar.BackColor = System.Drawing.SystemColors.Control;
+            this.progressBar.Location = new System.Drawing.Point(286, 313);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(755, 26);
+            this.progressBar.Step = 1;
+            this.progressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.progressBar.TabIndex = 11;
+            // 
             // groupBox1
             // 
             this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.groupBox1.AutoSize = true;
             this.groupBox1.BackColor = System.Drawing.Color.Transparent;
             this.groupBox1.Controls.Add(this.AutoModeCheckBox);
             this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Controls.Add(this.demoTextBox);
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.groupBox1.Location = new System.Drawing.Point(397, 185);
+            this.groupBox1.Location = new System.Drawing.Point(397, 171);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(491, 125);
+            this.groupBox1.Size = new System.Drawing.Size(491, 129);
             this.groupBox1.TabIndex = 10;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Chọn chế độ";
@@ -175,5 +191,6 @@
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.CheckBox AutoModeCheckBox;
+        private System.Windows.Forms.ProgressBar progressBar;
     }
 }

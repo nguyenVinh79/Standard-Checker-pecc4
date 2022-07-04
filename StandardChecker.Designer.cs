@@ -51,7 +51,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Left;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(191, 834);
+            this.panel1.Size = new System.Drawing.Size(179, 834);
             this.panel1.TabIndex = 0;
             this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
@@ -62,7 +62,7 @@
             this.pictureBox1.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBox1.InitialImage")));
             this.pictureBox1.Location = new System.Drawing.Point(3, 26);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(183, 61);
+            this.pictureBox1.Size = new System.Drawing.Size(176, 62);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
@@ -80,10 +80,10 @@
             this.inforMenuButton.IconFont = FontAwesome.Sharp.IconFont.Auto;
             this.inforMenuButton.IconSize = 40;
             this.inforMenuButton.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.inforMenuButton.Location = new System.Drawing.Point(0, 239);
+            this.inforMenuButton.Location = new System.Drawing.Point(0, 265);
             this.inforMenuButton.Name = "inforMenuButton";
             this.inforMenuButton.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
-            this.inforMenuButton.Size = new System.Drawing.Size(186, 81);
+            this.inforMenuButton.Size = new System.Drawing.Size(179, 81);
             this.inforMenuButton.TabIndex = 3;
             this.inforMenuButton.Text = "Thông tin";
             this.inforMenuButton.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
@@ -103,10 +103,10 @@
             this.editMenuButton.IconFont = FontAwesome.Sharp.IconFont.Auto;
             this.editMenuButton.IconSize = 40;
             this.editMenuButton.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.editMenuButton.Location = new System.Drawing.Point(0, 162);
+            this.editMenuButton.Location = new System.Drawing.Point(0, 188);
             this.editMenuButton.Name = "editMenuButton";
             this.editMenuButton.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
-            this.editMenuButton.Size = new System.Drawing.Size(186, 81);
+            this.editMenuButton.Size = new System.Drawing.Size(179, 81);
             this.editMenuButton.TabIndex = 2;
             this.editMenuButton.Text = "CS Dữ Liệu";
             this.editMenuButton.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
@@ -129,11 +129,11 @@
             this.checkMenuButton.IconFont = FontAwesome.Sharp.IconFont.Auto;
             this.checkMenuButton.IconSize = 40;
             this.checkMenuButton.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.checkMenuButton.Location = new System.Drawing.Point(0, 94);
+            this.checkMenuButton.Location = new System.Drawing.Point(0, 120);
             this.checkMenuButton.Name = "checkMenuButton";
             this.checkMenuButton.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
             this.checkMenuButton.Rotation = -45D;
-            this.checkMenuButton.Size = new System.Drawing.Size(186, 77);
+            this.checkMenuButton.Size = new System.Drawing.Size(179, 77);
             this.checkMenuButton.TabIndex = 1;
             this.checkMenuButton.Text = "Kiểm tra";
             this.checkMenuButton.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
@@ -145,9 +145,9 @@
             this.panelWindow.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("panelWindow.BackgroundImage")));
             this.panelWindow.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.panelWindow.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelWindow.Location = new System.Drawing.Point(191, 0);
+            this.panelWindow.Location = new System.Drawing.Point(179, 0);
             this.panelWindow.Name = "panelWindow";
-            this.panelWindow.Size = new System.Drawing.Size(1580, 834);
+            this.panelWindow.Size = new System.Drawing.Size(1363, 834);
             this.panelWindow.TabIndex = 1;
             this.panelWindow.Paint += new System.Windows.Forms.PaintEventHandler(this.panelWindow_Paint);
             // 
@@ -157,7 +157,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.ClientSize = new System.Drawing.Size(1771, 834);
+            this.ClientSize = new System.Drawing.Size(1542, 834);
             this.Controls.Add(this.panelWindow);
             this.Controls.Add(this.panel1);
             this.DoubleBuffered = true;

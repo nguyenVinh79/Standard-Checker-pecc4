@@ -18,6 +18,10 @@ namespace StandardChecker
             InitializeComponent();
             this.DoubleBuffered = true ;
             this.MaximizedBounds = Screen.FromHandle(this.Handle).WorkingArea;
+            OpenChildForm(new InspectionForm());
+            editMenuButton.BackColor = Color.Transparent;
+            checkMenuButton.BackColor = Color.DodgerBlue;
+            inforMenuButton.BackColor = Color.Transparent;
         }
 
         private void panel1_Paint(object sender, PaintEventArgs e)
