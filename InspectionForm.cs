@@ -110,16 +110,47 @@ namespace StandardChecker
                     pageContentList[i] = strList;
                 }
                 //PdfUsedFont[] usedfont = document.UsedFonts;
-                var acceptedMatchLevel = 0.62;
+                var acceptedMatchLevel = 0.65;
                 var matchResult = DiceCoefficientExtensions.DiceCoefficient(Cleanser.Cleanse("2737-1995"), Cleanser.Cleanse("2737-1995"));
 
                 if (!AutoModeCheckBox.Checked)
                 {
                     if (!string.IsNullOrEmpty(demoTextBox.Text))
                     {
-                        AutoModeCheckBox.Enabled = false;
+                        AutoModeCheckBox.Invoke((MethodInvoker)(() => AutoModeCheckBox.Enabled = false));
                         textBox.Invoke((MethodInvoker)(() => textBox.Text = ""));
                         List<string> filterString = new List<string> { "IEC", "TCVN", "QCVN", "TCXD", "ACI", "ASTM", "14TCN", "22TCN" };
+
+                        var context = new DocCheckEntities();
+                        var DocList = context.DocManagements.ToList();
+
+                        foreach(var docItem  in DocList)
+                        {
+                            var ArrStringDocCode = docItem.DocumentCode.Trim().Split(' ');
+                            ArrStringDocCode = ArrStringDocCode.Where(x => !string.IsNullOrEmpty(x)).ToArray();
+                            
+                            if(ArrStringDocCode.Length==2)
+                            {
+                                if(!filterString.Contains(ArrStringDocCode[0].Trim()))
+                                {
+                                    filterString.Add(ArrStringDocCode[0].Trim());
+                                }
+                            }
+                            
+                            if (ArrStringDocCode.Length >= 3)
+                            {
+                                if (!filterString.Contains(ArrStringDocCode[0].Trim()))
+                                {
+                                    var tempString = ArrStringDocCode[0] + " " + ArrStringDocCode[1];
+
+                                    if (!filterString.Contains(tempString.Trim()))
+                                    {
+                                        filterString.Add(tempString.Trim());
+                                    }
+                                }
+                            }    
+                        }    
+
                         string cleanDocumentString = demoTextBox.Text;
 
                         foreach (var item in filterString)
@@ -232,14 +263,58 @@ namespace StandardChecker
 
                 else
                 {
-
+                    
 
                     List<string> filterString = new List<string> { "IEC", "TCVN", "QCVN", "TCXD", "ACI", "ASTM", "14TCN", "22TCN" };
 
                     var cleanDocumentList = new List<DocManagement>();
-
                     var context = new DocCheckEntities();
-                    var InvalidDocList = context.DocManagements.Where(x => x.IsInvalid == true).ToList();
+                    List<DocManagement> InvalidDocList = new List<DocManagement>();
+
+                    try
+                    {
+                        InvalidDocList = context.DocManagements.Where(x => x.IsInvalid == true).ToList();
+                    }
+                    catch(Exception ex)
+                    {
+                        DialogResult messDialog = MessageBox.Show("Kiểm tra kết nối VPN", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                        if (messDialog == DialogResult.OK)
+                        {
+                            Application.Exit();
+                        }
+                    }
+
+                    #region update filter list
+                    var DocList = context.DocManagements.ToList();
+
+                    foreach (var docItem in DocList)
+                    {
+                        var ArrStringDocCode = docItem.DocumentCode.Trim().Split(' ');
+                        ArrStringDocCode = ArrStringDocCode.Where(x => !string.IsNullOrEmpty(x)).ToArray();
+
+                        if (ArrStringDocCode.Length == 2)
+                        {
+                            if (!filterString.Contains(ArrStringDocCode[0].Trim()))
+                            {
+                                filterString.Add(ArrStringDocCode[0].Trim());
+                            }
+                        }
+
+                        if (ArrStringDocCode.Length >= 3)
+                        {
+                            if (!filterString.Contains(ArrStringDocCode[0].Trim()))
+                            {
+                                var tempString = ArrStringDocCode[0] + " " + ArrStringDocCode[1];
+
+                                if (!filterString.Contains(tempString.Trim()))
+                                {
+                                    filterString.Add(tempString.Trim());
+                                }
+                            }
+                        }
+                    }
+                    #endregion
 
                     List<string> notifyContent = new List<string>();
                     List<string> notifyAltContent = new List<string>();
@@ -338,122 +413,202 @@ namespace StandardChecker
                                 Dictionary<string, int> docDic = new Dictionary<string, int>();
                                 if (pageContentList[i].Count > 0)
                                 {
-                                    foreach (var item in pageContentList[i])
+                                    List<string> detailContentPageList = pageContentList[i].Where(x => !string.IsNullOrEmpty(x)).ToList();
+
+                                    //foreach (var item in detailContentPageList)
+                                    for (var contentIndex = 0; contentIndex < detailContentPageList.Count(); contentIndex++)
                                     {
-                                        var docItem = item;
+                                        var currentContent = detailContentPageList[contentIndex];
+                                        var docItem = detailContentPageList[contentIndex];
 
-                                        if (item[item.Length - 1].ToString() == ".")
+                                        #region contentString filter
+                                        if (currentContent[currentContent.Length - 1].ToString() == ".")
                                         {
-                                            docItem = item.Substring(0, docItem.Length - 1);
+                                            docItem = currentContent.Substring(0, docItem.Length - 1);
                                         }
 
-                                        if (item[item.Length - 1].ToString() == ",")
+                                        if (currentContent[currentContent.Length - 1].ToString() == ",")
                                         {
-                                            docItem = item.Substring(0, docItem.Length - 1);
+                                            docItem = currentContent.Substring(0, docItem.Length - 1);
                                         }
 
-                                        if (item[item.Length - 1].ToString() == ")")
+                                        if (currentContent[currentContent.Length - 1].ToString() == ")")
                                         {
-                                            docItem = item.Substring(0, docItem.Length - 1);
+                                            docItem = currentContent.Substring(0, docItem.Length - 1);
                                         }
 
-                                        if (item[item.Length - 1].ToString() == ";")
+                                        if (currentContent[currentContent.Length - 1].ToString() == ";")
                                         {
-                                            docItem = item.Substring(0, docItem.Length - 1);
+                                            docItem = currentContent.Substring(0, docItem.Length - 1);
                                         }
+
+                                        if (currentContent[currentContent.Length - 1].ToString() == ":")
+                                        {
+                                            docItem = currentContent.Substring(0, docItem.Length - 1);
+                                        }
+
+                                        if (currentContent[currentContent.Length - 1].ToString() == "*")
+                                        {
+                                            docItem = currentContent.Substring(0, docItem.Length - 1);
+                                        }
+
+                                        if (currentContent[currentContent.Length - 1].ToString() == "!")
+                                        {
+                                            docItem = currentContent.Substring(0, docItem.Length - 1);
+                                        }
+
+                                        if (currentContent[currentContent.Length - 1].ToString() == "(")
+                                        {
+                                            docItem = currentContent.Substring(0, docItem.Length - 1);
+                                        }
+                                        #endregion
 
                                         var matchCheckBool = DiceCoefficientExtensions.DiceCoefficient(Cleanser.Cleanse(cleanDocumentString), Cleanser.Cleanse(docItem));
 
                                         if (matchCheckBool >= acceptedMatchLevel)
                                         {
+                                            #region check prefix standard(tcvn, iec..)
+                                            var prefixCheckedBool = false;
+                                            var InvalidDocCodeArray = invalidDoc.DocumentCode.Trim().Split(' ');
+                                            var prefixStandard = "";
+                                            InvalidDocCodeArray = InvalidDocCodeArray.Where(x => !string.IsNullOrEmpty(x)).ToArray();
 
-                                            if (!docDic.ContainsKey(docItem))
+                                            if (InvalidDocCodeArray.Length >= 2)
                                             {
-                                                docDic.Add(docItem, 0);
-                                            }
-                                            else
-                                            {
-                                                docDic[docItem] += 1;
-                                            }
-
-                                            var docCodePosition = pageContent[i].ToString().IndexOf(docItem, StringComparison.OrdinalIgnoreCase);
-
-                                            if (matchCheckBool < 1)
-                                            {
-                                                //textBox.Text += "Đã phát hiện văn bản " + docItem + " hết hiệu lực " + "(trang " + $"{i + 1})" + " \r\n";
-                                                var notifyTextTemp = "(Trang " + $"{i + 1}) " + "Phát hiện văn bản " + docItem + $" (từ {invalidDoc.DocumentCode})" + " hết hiệu lực";
-
-                                                string relativeResultItem = $"{i + 1}${docItem}${invalidDoc.DocumentCode}$";
-
-                                                if (docCodePosition > 0)
+                                                if (InvalidDocCodeArray.Length == 2)
                                                 {
-                                                    HasDetected = true;
+                                                    prefixStandard = InvalidDocCodeArray[0].Trim();
+                                                }
 
-                                                    notifyContent.Add(notifyTextTemp);
+                                                if (InvalidDocCodeArray.Length >= 3)
+                                                {
+                                                    var tempString = InvalidDocCodeArray[0] + " " + InvalidDocCodeArray[1];
+                                                    prefixStandard = tempString;
+                                                }
 
-                                                    var findAltDoc = context.DocManagements.Where(x => x.SourceDoc == invalidDoc.ID).ToList();
-
-                                                    //find all matching strings from the first page, even if some of them span multiple lines
-                                                    PdfTextFind[] findResults = document.Pages[i].FindText(docItem, TextFindParameter.CrossLine).Finds;
-
-                                                    //highlight the search result
-                                                    findResults[docDic[docItem]].ApplyHighLight(Color.Red);
-
-
-                                                    if (findAltDoc.Count > 0)
+                                                if (!string.IsNullOrEmpty(prefixStandard))
+                                                {
+                                                    if (contentIndex == 1)
                                                     {
-
-                                                        foreach (var AltItem in findAltDoc)
+                                                        for (var preChar = 1; preChar > 0; preChar--)
                                                         {
-                                                            notifyTextTemp = "Văn bản " + invalidDoc.DocumentCode + " đã được thay thế bởi văn bản " + AltItem.DocumentCode;
-                                                            notifyContent.Add(notifyTextTemp);
-                                                            if (findAltDoc.Count < 2)
+                                                            var prefixCheck = DiceCoefficientExtensions.DiceCoefficient(Cleanser.Cleanse(prefixStandard), Cleanser.Cleanse(detailContentPageList[contentIndex-preChar]));
+
+                                                            if (prefixCheck >= 0.68)
                                                             {
-                                                                relativeResultItem += $"{AltItem.DocumentCode}";
+                                                                prefixCheckedBool = true;
                                                             }
-                                                            else
-                                                                relativeResultItem += $"{AltItem.DocumentCode} - ";
                                                         }
                                                     }
-                                                    else
+
+                                                    if (contentIndex >= 2)
                                                     {
-                                                        relativeResultItem += " ";
+                                                        for (var preChar = 2; preChar > 0; preChar--)
+                                                        {
+                                                            var prefixCheck = DiceCoefficientExtensions.DiceCoefficient(Cleanser.Cleanse(prefixStandard), Cleanser.Cleanse(detailContentPageList[contentIndex-preChar]));
+
+                                                            if (prefixCheck >= 0.68)
+                                                            {
+                                                                prefixCheckedBool = true;
+                                                            }
+                                                        }
                                                     }
-
-                                                    relativeResultList.Add(relativeResultItem);
-
-                                                    relativeResultData = relativeResultList.ToArray();
                                                 }
                                             }
                                             else
+                                                prefixCheckedBool = true;
+                                            #endregion
+
+                                            if (prefixCheckedBool)
                                             {
-                                                //textBox.Text += "Đã phát hiện văn bản " + docItem + " hết hiệu lực " + "(trang " + $"{i + 1})" + " \r\n";
-                                                var notifyTextTemp = "(Trang " + $"{ i + 1}) " + "Đã phát hiện văn bản " + docItem + $" (tham chiếu từ {invalidDoc.DocumentCode})" + " hết hiệu lực";
-
-
-                                                if (docCodePosition > 0)
+                                                if (!docDic.ContainsKey(docItem))
                                                 {
-                                                    HasDetected = true;
+                                                    docDic.Add(docItem, 0);
+                                                }
+                                                else
+                                                {
+                                                    docDic[docItem] += 1;
+                                                }
 
-                                                    notifyAbsoluteCheckContent.Add(notifyTextTemp);
-                                                    var findAltDoc = context.DocManagements.Where(x => x.SourceDoc == invalidDoc.ID).ToList();
+                                                var docCodePosition = pageContent[i].ToString().IndexOf(docItem, StringComparison.OrdinalIgnoreCase);
 
-                                                    //find all matching strings from the first page, even if some of them span multiple lines
-                                                    PdfTextFind[] findResults = document.Pages[i].FindText(docItem, TextFindParameter.CrossLine).Finds;
+                                                if (matchCheckBool < 1)
+                                                {
+                                                    //textBox.Text += "Đã phát hiện văn bản " + docItem + " hết hiệu lực " + "(trang " + $"{i + 1})" + " \r\n";
+                                                    var notifyTextTemp = "(Trang " + $"{i + 1}) " + "Phát hiện văn bản " + detailContentPageList[contentIndex-1] +" " + docItem + $" (từ {invalidDoc.DocumentCode})" + " hết hiệu lực";
 
-                                                    //highlight the search result
+                                                    string relativeResultItem = $"{i + 1}${detailContentPageList[contentIndex - 1]} {docItem}${invalidDoc.DocumentCode}$";
 
-                                                    findResults[docDic[docItem]].ApplyHighLight(Color.Red);
-
-                                                    if (findAltDoc.Count > 0)
+                                                    if (docCodePosition > 0)
                                                     {
+                                                        HasDetected = true;
 
-                                                        foreach (var AltItem in findAltDoc)
+                                                        notifyContent.Add(notifyTextTemp);
+
+                                                        var findAltDoc = context.DocManagements.Where(x => x.SourceDoc == invalidDoc.ID).ToList();
+
+                                                        //find all matching strings from the first page, even if some of them span multiple lines
+                                                        PdfTextFind[] findResults = document.Pages[i].FindText(docItem, TextFindParameter.CrossLine).Finds;
+
+                                                        //highlight the search result
+                                                        findResults[docDic[docItem]].ApplyHighLight(Color.Red);
+
+
+                                                        if (findAltDoc.Count > 0)
                                                         {
-                                                            notifyTextTemp = "Văn bản " + invalidDoc.DocumentCode + " đã được thay thế bởi văn bản " + AltItem.DocumentCode;
-                                                            notifyAbsoluteCheckContent.Add(notifyTextTemp);
+
+                                                            foreach (var AltItem in findAltDoc)
+                                                            {
+                                                                notifyTextTemp = "Văn bản " + invalidDoc.DocumentCode + " đã được thay thế bởi văn bản " + AltItem.DocumentCode;
+                                                                notifyContent.Add(notifyTextTemp);
+                                                                if (findAltDoc.Count < 2)
+                                                                {
+                                                                    relativeResultItem += $"{AltItem.DocumentCode}";
+                                                                }
+                                                                else
+                                                                    relativeResultItem += $"{AltItem.DocumentCode} - ";
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            relativeResultItem += " ";
                                                         }
 
+                                                        relativeResultList.Add(relativeResultItem);
+
+                                                        relativeResultData = relativeResultList.ToArray();
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    //textBox.Text += "Đã phát hiện văn bản " + docItem + " hết hiệu lực " + "(trang " + $"{i + 1})" + " \r\n";
+                                                    var notifyTextTemp = "(Trang " + $"{ i + 1}) " + "Đã phát hiện văn bản " + $"{detailContentPageList[contentIndex - 1]} " + docItem + $" (tham chiếu từ {invalidDoc.DocumentCode})" + " hết hiệu lực";
+
+
+                                                    if (docCodePosition > 0)
+                                                    {
+                                                        HasDetected = true;
+
+                                                        notifyAbsoluteCheckContent.Add(notifyTextTemp);
+                                                        var findAltDoc = context.DocManagements.Where(x => x.SourceDoc == invalidDoc.ID).ToList();
+
+                                                        //find all matching strings from the first page, even if some of them span multiple lines
+                                                        PdfTextFind[] findResults = document.Pages[i].FindText(docItem, TextFindParameter.CrossLine).Finds;
+
+                                                        //highlight the search result
+
+                                                        findResults[docDic[docItem]].ApplyHighLight(Color.Red);
+
+                                                        if (findAltDoc.Count > 0)
+                                                        {
+
+                                                            foreach (var AltItem in findAltDoc)
+                                                            {
+                                                                notifyTextTemp = "Văn bản " + invalidDoc.DocumentCode + " đã được thay thế bởi văn bản " + AltItem.DocumentCode;
+                                                                notifyAbsoluteCheckContent.Add(notifyTextTemp);
+                                                            }
+
+                                                        }
                                                     }
                                                 }
                                             }
@@ -594,7 +749,7 @@ namespace StandardChecker
             }
             catch(Exception ex)
             {
-                 DialogResult messDialog = MessageBox.Show("Vui lòng kiểm tra kết nối VPN", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                 DialogResult messDialog = MessageBox.Show("Đã xảy ra lỗi \r\n" + ex.ToString(), "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 
                 if(messDialog == DialogResult.OK)
                 {

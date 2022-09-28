@@ -11,17 +11,17 @@ using System.Windows.Forms;
 
 namespace StandardChecker
 {
-    public partial class ManageForm : Form
+    public partial class DBManagement : Form
     {
         DocManagement currentDoc = new DocManagement();
         List<DocManagement> ComboboxDatalist = new List<DocManagement>();
 
-        public ManageForm()
+        public DBManagement()
         {
             InitializeComponent();
         }
 
-        private void ManageForm_Load(object sender, EventArgs e)
+        private void DBManagement_Load(object sender, EventArgs e)
         {
             DocFilterCB.Items.Insert(0, "Vui lòng chọn bộ lọc");
             DocFilterCB.Items.Insert(1, "Còn hiệu lực");
@@ -325,12 +325,6 @@ namespace StandardChecker
                         else newDoc.IsInvalid = false;
                     }
 
-                    if (newDoc.SourceDoc >= 1)
-                    {
-                        var sourceDoc = context.DocManagements.Where(x => x.ID == newDoc.SourceDoc).FirstOrDefault();
-                        sourceDoc.IsInvalid = true;
-                    }
-
                     /*
                     if (!string.IsNullOrEmpty(AltDocComboBox.SelectedItem.ToString()))
                     {
@@ -589,12 +583,6 @@ namespace StandardChecker
 
                     }
 
-                    if (selectedDoc.SourceDoc >= 1)
-                    {
-                        var sourceDoc = context.DocManagements.Where(x => x.ID == selectedDoc.SourceDoc).FirstOrDefault();
-                        sourceDoc.IsInvalid = true;
-                    }
-
                     AddBtn.Enabled = true;
                     EditBtn.Enabled = false;
                     NameTB.Text = "";
@@ -846,14 +834,6 @@ namespace StandardChecker
         private void AltDocComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
 
-        }
-
-        private void searchContent_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                e.SuppressKeyPress = true;
-            }
         }
     }
 }

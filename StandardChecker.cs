@@ -17,7 +17,8 @@ namespace StandardChecker
         {
             InitializeComponent();
             this.DoubleBuffered = true ;
-            this.MaximizedBounds = Screen.FromHandle(this.Handle).WorkingArea;
+            //this.MaximizedBounds = Screen.FromHandle(this.Handle).Bounds;
+            this.WindowState = FormWindowState.Maximized;
             OpenChildForm(new InspectionForm());
             editMenuButton.BackColor = Color.Transparent;
             checkMenuButton.BackColor = Color.DodgerBlue;

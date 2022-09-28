@@ -175,6 +175,12 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>DocumentModel.edmx</DependentUpon>
     </Compile>
+    <Compile Include="DBManagement.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DBManagement.Designer.cs">
+      <DependentUpon>DBManagement.cs</DependentUpon>
+    </Compile>
     <Compile Include="ManageForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -197,6 +203,9 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringMatching.cs" />
+    <EmbeddedResource Include="DBManagement.resx">
+      <DependentUpon>DBManagement.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ManageForm.resx">
       <DependentUpon>ManageForm.cs</DependentUpon>
     </EmbeddedResource>
